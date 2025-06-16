@@ -6,16 +6,16 @@ permalink: /travels/
 
 <div>
   <div class="center" id="map"></div>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     function markerIcon() {
-      return {
-        path: google.maps.SymbolPath.CIRCLE,
-        fillColor: '#ff6961',
-        fillOpacity: .6,
-        scale: 4.5,
-        strokeColor: 'white',
-        strokeWeight: 0.5
-      };
+      return L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background-color: #ff6961; width: 9px; height: 9px; border-radius: 50%; border: 0.5px solid white; opacity: 0.6;"></div>',
+        iconSize: [9, 9],
+        iconAnchor: [4.5, 4.5]
+      });
     }
 
     function inDarkMode() {
@@ -24,24 +24,27 @@ permalink: /travels/
 
     function initMap() {
       var myLatLng = {{ site.data.map | jsonify }};
-      var map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 4,
-        center: myLatLng[0],
-        styles: {{ site.data.mapcolors | jsonify }}[inDarkMode() ? "dark" : "light"]
+
+      var map = L.map('map', {
+        center: [myLatLng[0].lat, myLatLng[0].lng],
+        zoom: 4
       });
 
-      for(var i = 0; i < myLatLng.length; i++) {
-        new google.maps.Marker({
-          position: myLatLng[i],
-          map: map,
-          icon: markerIcon(),
-          title: myLatLng[i].city
-        });
+      if (inDarkMode()) {
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+      } else {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
       }
 
+      for (var i = 0; i < myLatLng.length; i++) {
+        L.marker([myLatLng[i].lat, myLatLng[i].lng], {
+          icon: markerIcon()
+        })
+        .addTo(map)
+        .bindPopup(myLatLng[i].city);
+      }
     }
-  </script>
-  <script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDDXaK22KvSs_q0Zmn1rAWLMbXSBKtczJw&callback=initMap">
+
+    document.addEventListener('DOMContentLoaded', initMap);
   </script>
 </div>
