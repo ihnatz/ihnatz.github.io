@@ -3,6 +3,7 @@ layout: post
 title:  "Fluent interface in Ruby"
 date:   2015-11-08 17:07:12
 categories: ruby object-oriented-api
+published: false
 ---
 
 Let's imagine that you want to write your implementation of Rails `where` method. What for you need it? For example, if you have old RoR 2 project and you have no any wish to write where statements in pure SQL. What are the requirements of such service? You should have ability to chain `where` statements and transform all this into conditions for Rails 2 ActiveRecord.

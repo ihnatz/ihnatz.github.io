@@ -3,6 +3,7 @@ layout: post
 title:  "Resolving security issues with Rubocop"
 date:   2017-05-09 18:45:13
 categories: rails ast rubocop
+published: false
 ---
 
 Sometimes when you are observing your project source code you can see code like:

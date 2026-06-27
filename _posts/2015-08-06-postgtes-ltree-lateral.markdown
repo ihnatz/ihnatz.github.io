@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "PostgreSQL Ltree and LATERAL"
+title:  "Finding Leaf Nodes with ltree"
 date:   2015-08-06 22:20:35
 categories: postgres ltree lateral
 ---
@@ -13,7 +13,7 @@ SELECT * FROM "properties" WHERE "id" NOT IN
 {% endhighlight %}
 
 We just excluding all nodes that are parents for any node and that's it.
-But what if you are prefer to use pure `ltree` without `parent_id`? And here come trebles.
+But what if you are prefer to use pure `ltree` without `parent_id`? And here come troubles.
 All that I can find by googling this problem is how to find node with most children count:
 
 {% highlight sql %}
@@ -22,7 +22,7 @@ SELECT subpath("path", 0, 1), count(*)
   GROUP BY 1 ORDER BY 2 DESC;
 {% endhighlight %}
 
-And to be honest, I'm envy guy who invented it. Pretty simple. With help of `subpath` we are retrieving root element for each node then group by it and count how much such elements. But that is no our problem.
+And to be honest, I envy whoever invented it. Pretty simple: with `subpath` we retrieve the root element for each node, group by it, and count how many such elements exist. But that is not our problem.
 
 As I said before, leaf is a node without children. We can find all children nodes with `ltree <@ ltree`.
 
@@ -74,7 +74,7 @@ SELECT * FROM "properties" AS "main" WHERE (
 
 Simple and elegant way, what we need!
 
-When I show it to [Andrei](<https://github.com/sjke>), he noticed that it will not work for nodes with same path. And if it has not so much sense for `path` with ids it's normal for `path` with hierarchical structures.
+When I showed it to [Andrei](<https://github.com/sjke>), he noticed that it will not work for nodes with the same path. And if it has not so much sense for `path` with ids it's normal for `path` with hierarchical structures.
 
 To reproduce this bug on our data we will add node with same path but another value.
 
@@ -90,7 +90,7 @@ insert into properties (name, path, parent_id) VALUES ('H', '1.3.7', 9);
   6 | F    | 1.2.6 |         2
 {% endhighlight %}
 
-We missed two leaves with path `1.3.7` because `<@` operator will return all ancestors including self and nodes with same pathes. To fix it we just need to add `DISTINCT` keyword in right place.
+We missed two leaves with path `1.3.7` because `<@` operator will return all ancestors including self and nodes with same paths. To fix it we just need to add `DISTINCT` keyword in right place.
 
 {% highlight sql %}
 SELECT * FROM "properties" AS "main" WHERE (
@@ -107,6 +107,6 @@ SELECT * FROM "properties" AS "main" WHERE (
   8 | H    | 1.3.7 |         9
 {% endhighlight %}
 
-As consiquence: if your solution is too complex usualy it's not right solution.
+As a consequence: if your solution is too complex, it's usually not the right one.
 
 _P.S. If you want to see nice example of using `LATERAL` keyword you can check [this](<http://blog.heapanalytics.com/postgresqls-powerful-new-join-type-lateral/>) article._

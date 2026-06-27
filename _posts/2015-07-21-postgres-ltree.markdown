@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "PostgreSQL hierarchical data structures"
+title:  "Tree Traversal in PostgreSQL: ltree, GiST, and Recursive CTEs"
 date:   2015-07-21 09:49:35
 categories: postgres ltree recursive
 ---
@@ -14,9 +14,9 @@ end
 {% endhighlight %}
 
 
-In Ruby, you can use `ltree_hierarchy` gem to simplify main operations for manipulating with tree's nodes. It updates path column, that contains all hierarchy for each node. For example, if node parents are 1, 3, 5 and node id is 9, then node path will contain `1.3.5.9`. It allows you easy filter results. As you can see, it seems a little differently unlike in PostrgreSQL [documentation](<www.postgresql.org/docs/9.4/static/ltree.html>).
+In Ruby, you can use `ltree_hierarchy` gem to simplify main operations for manipulating with tree's nodes. It updates path column, that contains all hierarchy for each node. For example, if node parents are 1, 3, 5 and node id is 9, then node path will contain `1.3.5.9`. It allows you to easily filter results. Note that the path format differs slightly from the raw [PostgreSQL documentation](<www.postgresql.org/docs/9.4/static/ltree.html>).
 
-As sandbox we will use simple database that contains two tables, one for hierarchical structure and second for some additional data connected to each node of tree. To emulate `ltree_hierarchy` gem behaviour we automaticly fill path column by `/dev/hands`. Don't forget to enable `ltree` extension.
+As sandbox we will use simple database that contains two tables, one for hierarchical structure and second for some additional data connected to each node of tree. To emulate `ltree_hierarchy` gem behaviour we fill the path column manually. Don't forget to enable `ltree` extension.
 
 {% highlight sql %}
 create temp table properties (
@@ -49,7 +49,7 @@ insert into reports (property_id, value) VALUES (6, 11);
 {% endhighlight %}
 
 If you want more data to fill difference between queries speed you can use [my file](<https://gist.github.com/ignat-zakrevsky/10a4e2024b9911c5c15f>) with 4.5k+ records. (You need download it, connect to schema through `psql` and run `\i path_to_file`)
-Ok, let's try to build all named pathes for each node. To retrieve curresponding nodes we will filter all other nodes. As path column stores all parent ids we can easy filter non-related nodes with `like` queries.
+Let's build named paths for each node. Since the path column stores all parent ids, we can easily filter unrelated nodes with `like` queries.
 
 {% highlight sql %}
 # select '1.2.3' like '1.2.3%';   -- t
@@ -93,7 +93,7 @@ select "properties"."id",
 (16 rows)
 {% endhighlight %}
 
-Ok, we have all nodes names, but to get named path we need to concatinate all of them into one. We can achive it with [string_agg](<http://www.postgresql.org/docs/devel/static/functions-aggregate.html>) aggregate function.
+We have all node names, but to get a named path we need to concatenate them. We can achieve it with [string_agg](<http://www.postgresql.org/docs/devel/static/functions-aggregate.html>) aggregate function.
 
 > `string_agg(expression, delimiter)` - input values concatenated into a string, separated by delimiter
 
@@ -122,7 +122,7 @@ select "properties"."id",
   7 | G    | 1.3.7 | A->C->G
 {% endhighlight %}
 
-Ok, it seems like what we want. We are happy and starting to use it on production database.
+Looks correct. Let's try it against the production database.
 
 {% highlight sql %}
  id |   name   |     path    |           named_path
@@ -134,7 +134,7 @@ Ok, it seems like what we want. We are happy and starting to use it on productio
   5 | 45160d77 | 1.2.5       | a450ceb3->91b2f902->45160d77
 {% endhighlight %}
 
-Pay attention on record with id 4. Named path started not from root (`a450ceb3`) but from second record. It's not suitable variant for us. But let's read documentation more accurate.
+Look at record with id 4 — the named path starts from the second record, not the root. Let's read the documentation more carefully.
 
 > This ordering is unspecified by default, but can be controlled by writing an `ORDER BY` clause within the aggregate call
 
@@ -227,7 +227,7 @@ And let's try again.
  Total runtime: 177.499 ms
 {% endhighlight %}
 
-Wow! Instead of filtering records it's just using our index. It 20 times faster then we have before. Keep it so.
+Wow! Instead of filtering records it's just using our index. It's 20 times faster than before. Keep it so.
 
 Time goes on and you have new task. You need to find sum of each children for each node. Seems like not big problem, just little modify our previous query.
 
@@ -284,7 +284,7 @@ select "properties"."id",
   7 | 1.3.7 | G    | A->C->G    |  20
 {% endhighlight %}
 
-Exactly what we need. Seems like we can take a rest. But let's see a little deeper what happens.
+Exactly what we need. But let's look a little deeper at what's happening.
 
 {% highlight sql %}
                                                                                  QUERY PLAN
@@ -307,7 +307,7 @@ Exactly what we need. Seems like we can take a rest. But let's see a little deep
 (15 rows)
 {% endhighlight %}
 
-`loops=4643`, self join isn't good idea. It takes N^2 records to process query. Sad, it seems like we need something else. And PostgreSQL have something for us. [WITH Queries](<http://www.postgresql.org/docs/9.4/static/queries-with.html>) you need to pay attention on `RECURSIVE` keyword.
+`loops=4643` — a self join processes N² records. We need something else, and PostgreSQL has it: [WITH Queries](<http://www.postgresql.org/docs/9.4/static/queries-with.html>). Pay attention to the `RECURSIVE` keyword.
 
 > The optional `RECURSIVE` modifier changes `WITH` from a mere syntactic convenience into a feature that accomplishes things not otherwise possible in standard SQL. Using `RECURSIVE`, a `WITH` query can refer to its own output. The general form of a recursive `WITH` query is always a non-recursive term, then `UNION` (or `UNION ALL`), then a recursive term, where only the recursive term can contain a reference to the query's own output
 

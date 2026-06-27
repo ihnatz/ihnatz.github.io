@@ -3,6 +3,7 @@ layout: post
 title:  "Rails: Fast test feedback loop"
 date:   2021-08-18 13:26:31
 categories: rails specs
+published: false
 ---
 
 Using TDD in pure Ruby is pretty simple. There is no need for any dependencies or frameworks. Let's imagine you want to create a class with the method which adds two values. Let's write a test:

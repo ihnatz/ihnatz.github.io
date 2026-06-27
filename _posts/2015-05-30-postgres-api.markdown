@@ -3,6 +3,7 @@ layout: post
 title:  "PostgreSQL HTTP API"
 date:   2015-05-30 22:12:35
 categories: postgres api postgrest
+published: false
 ---
 
 I’m a huge PostgreSQL fun and when I saw post about [MySQL HTTP API](<http://ilyabylich.svbtle.com/experimental-mysql-http-api-and-ruby>) I was very impressed. So, I decided to find something similar for PostgreSQL and it's [here](<https://wiki.postgresql.org/wiki/HTTP_API>). At the post buttom I find link to [PostgresREST](<https://github.com/begriffs/postgrest>). Let's play with it.

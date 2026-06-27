@@ -3,6 +3,7 @@ layout: post
 title:  "How to test Rails models structure"
 date:   2018-05-20 18:05:10
 categories: rails schema specs
+published: false
 ---
 
 When you are generating Rails migration you have something like this:

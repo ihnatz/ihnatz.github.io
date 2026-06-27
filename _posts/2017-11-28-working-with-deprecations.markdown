@@ -3,6 +3,7 @@ layout: post
 title:  "Working with deprecations"
 date:   2017-11-28 21:11:13
 categories: rails honeybadger
+published: false
 ---
 
 Deprecations are the normal part of lifecycle of any large application. A big amount of code makes changes of public API really difficult. Especially if we need to do it for all the code. When you meet this problem for the first time, the first reaction is to simply add some `puts` with info and you think it will be ok, but there are better options, especially if your project is on RoR.

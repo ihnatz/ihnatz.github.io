@@ -1,8 +1,9 @@
 ---
 layout: post
-title:  "Growing (not only) trees. Part 2"
+title:  "Parsing Ruby AST for Class Dependency Graphs"
 date:   2017-08-20 11:45:13
 categories: ruby graphviz trees ast
+published: false
 ---
 
 In the first article part we already learned how to render a tree. Let's try to use this knowledge on practice. We don't want to solve something trivial, so we should select suitable problem. So, we will render class relations diagram in Rails application. And there is no any boring models diagrams like <https://github.com/preston/railroady> or <https://github.com/voormedia/rails-erd>, no! We will make it with help of the syntax analyzing.
@@ -179,7 +180,7 @@ def on_const(node)
 end
 ```
 
-Not to hard, but it's impossible to determine in which class we are receiving this constants. It will be nice to receive not only children of each node, but parents. But it's impossible (again!) to make it by standard AST processing tools, because AST designed for top-bottom traversing, but we need bottom-top. From another side, we could push information about current processing node on every step and pop it when we are living node. Oh, it's very similar to actually code executing with all this call stacks and so on, the main thing is not to go too far with nesting and not to receive stack overflow :). The code is very simple, every time when `AST::Processor` processing node it calls method `process`, so we need to redefine it a little:
+Not too hard, but there's a problem: we can't determine which class a constant belongs to. We need not only the children of each node, but the parents too. Standard AST processing is top-down, but we need bottom-up context. The solution is to maintain a nesting stack — push the current node on entry, pop it on exit, much like a call stack. Every time `AST::Processor` processes a node it calls `process`, so we override it:
 
 ```ruby
   def process(node)
@@ -189,7 +190,7 @@ Not to hard, but it's impossible to determine in which class we are receiving th
   end
 ```
 
-Ok, now our live is muuuuuuuuuuuuuuch easier. Muuuuuuch! For example, we could receive current node parent:
+Now we can easily access the current node's parent:
 
 ```ruby
   def parent
@@ -205,7 +206,7 @@ and find in which class we are processing current node:
   end
 ```
 
-And will make our live easier:
+Which gives us useful helpers:
 
 ```ruby
   def klass_name_for(node)
@@ -391,4 +392,4 @@ processor.klass_dependencies # => {"D"=>["B::C"], "E"=>["A::B::C"]}
 processor.klass_definitions # => ["C", "D", "E"]
 ```
 
-This problem we will solve in the next chapter.
+This problem was left unsolved — a Part 3 was planned but never written. The code up to this point is self-contained and the namespace resolution is left as an exercise.

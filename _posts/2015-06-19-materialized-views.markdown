@@ -1,11 +1,11 @@
 ---
 layout: post
-title:  "PostgreSQL Materialized Views in Rails"
+title:  "Materialized Views and Concurrent Refresh"
 date:   2015-06-19 17:49:35
 categories: rails materialized views
 ---
 
-Materialized view is a object that contains the query's results. Unlike database table it doesn't support `INSERT`/`UPDATE`/`DELETE` opertaions. Since all this operations unsupported to update materialized view you need to call refresh view opertaion. In PostgreSQL materialized views support was introduced in version 9.3.
+Materialized view is an object that contains the query's results. Unlike a database table it doesn't support `INSERT`/`UPDATE`/`DELETE` operations. Since these operations are unsupported, to update a materialized view you need to call a refresh operation. In PostgreSQL materialized views support was introduced in version 9.3.
 From [PostgreSQL documentation](<http://www.postgresql.org/docs/9.3/static/sql-creatematerializedview.html>) you can see how to create materialized view. So, you need query that you want to materialize and... that all.
 
 Let's assume you have next structure: `books`, `authors` and `feedbacks`. Each `author` has many `books`, each `book` has many `feedbacks`
@@ -68,7 +68,7 @@ class CreateAuthorsFeedbacks < ActiveRecord::Migration
 end
 {% endhighlight %}
 
-To be honest, I'm not big fun of using Rails `to_sql` method and so on and prefer to write pure SQL for such migrations. But it's sample and we will keep it so.
+To be honest, I'm not a big fan of using Rails `to_sql` method and so on and prefer to write pure SQL for such migrations. But it's sample and we will keep it so.
 Each selected column will be `materialized view` column, that's why we used `as` for `authors.id`, in our table "authors.id" will be stored in "author_id" column. Unlike simple views, we can index any materialized view column, additionaly, we will make it index unique. As I said before, to actualize data in view we need to call refresh view. In pure `PostgreSQL` it will be:
 
 {% highlight sql %}
@@ -154,7 +154,7 @@ AuthorsFeedback.all
 #]>
 {% endhighlight %}
 
-P.S. Don't forget to chnage your dump format, `schema.rb` can't store materialized view structure, so, you need to store all this in SQL. Change in `application.rb`
+P.S. Don't forget to change your dump format, `schema.rb` can't store materialized view structure, so, you need to store all this in SQL. Change in `application.rb`
 {% highlight ruby %}
 config.active_record.schema_format = :sql
 {% endhighlight %}

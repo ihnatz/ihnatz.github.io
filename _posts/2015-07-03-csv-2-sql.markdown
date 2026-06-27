@@ -3,6 +3,7 @@ layout: post
 title:  "CSV2SQL"
 date:   2015-07-03 21:37:35
 categories: postgres csv sql
+published: false
 ---
 
 The CSV ("Comma Separated Values") file format is often used to exchange data between differently similar applications. For programmer, parsing CSV files isn't a rare case. If CSV file contains not more than one hundred lines it's not problem to parse it with built in programming language tools or libraries. But when you are using very high-level language and file size increases you need something more powerful.

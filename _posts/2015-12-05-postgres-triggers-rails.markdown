@@ -1,22 +1,22 @@
 ---
 layout: post
-title:  "PostgreSQL triggers in Rails"
+title:  "Full-text Fuzzy Search with pg_trgm and Triggers"
 date:   2015-12-05 19:21:55
 categories: postgres triggers rails
 ---
 
 SQL triggers is something that everybody heard a lot about. Before start we need to talk about benefits and burdens.
 
-###+
+### Pros
 
-1. It's very very fast. If you are using any kind of adapter you pay for all this wrappers and connectors. If it's trigger -- all operations are very cheap because they are provided by PostgtreSQL.
-2. It works like a magick. There is no code on your repository, there is no any callbacks on your models and so on.
+1. It's very fast. If you are using any kind of adapter you pay for all the wrappers and connectors. With triggers, all operations are very cheap because they are handled by PostgreSQL directly.
+2. It works like magic. There is no code in your repository, no callbacks on your models.
 
-###-
+### Cons
 
 1. It works like a magick. You can't easy determine all operations. All this `\df+` stuff and so on.
 2. It's hard to change. Really if you want change trigger you need to drop it and hang it again. With full trigger code. You can use [hair_trigger](<https://github.com/jenseng/hair_trigger>) to simplify it but anyway.
-3. It increases requirements to your developers. Really, thay should now SQL. In perfect world your team is awesome. But it's business.
+3. It increases requirements on your developers. They should know SQL. In perfect world your team is awesome. But it's business.
 4. It will cause some problems in cause if you are using STI because you can't define model by it's tablename.
 5. It can cause problems on backups restoring. On restoring large tables somebody can use `--disable-triggers` to speed up process and it's not that you are expecting.
 

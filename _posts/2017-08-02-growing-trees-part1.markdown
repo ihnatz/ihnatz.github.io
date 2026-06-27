@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Growing (not only) trees. Part 1"
+title:  "Visualizing Trees and ASTs with Graphviz"
 date:   2017-08-02 19:09:22
 categories: ruby graphviz trees
 ---
@@ -180,7 +180,7 @@ Yes! So nice, actually what we want. But...
 
 ![Binary tree with problems](/assets/growing-trees/tree_6_wrong_again.png)
 
-Hay! Node with value 6 is on the right of node with value 7, maybe something wrong with our tree insertion code?
+Hey! Node with value 6 is on the right of node with value 7 — is something wrong with the tree insertion code?
 
 ```
 Node  Left  Right
@@ -312,4 +312,296 @@ I used this code to debug my RB-tree implementation. There are dotted edges whic
 
 ![RB tree with debug](/assets/growing-trees/tree_10_debug.png)
 
-Is it useful per se? Seems no, RB-tree implementation isn't common task for average developer. In the second part we will discuss how to use this knowledge in real life world.
+The same renderer works on any tree structure. Let's apply it to something more practical.
+
+## Parsing Ruby ASTs
+
+An AST is just a tree, so the renderer above works with minor adjustments. The Ruby `parser` gem exposes the AST for any source file. The canonical approach would be the Visitor pattern, but we can keep it simpler:
+
+```ruby
+require 'parser/current'
+
+class ASTRenderer
+  def initialize(tree)
+    @tree = tree
+  end
+
+  def call
+    result = []
+    result << "digraph graphname {"
+
+    bfs(@tree).each do |node|
+      result << ["#{node.object_id}", %Q{[label="#{present(node)}"]}].join(" ")
+      node.children.each do |child|
+        next unless child.is_a?(Parser::AST::Node)
+        result << [[node.object_id, child.object_id].join(" -> ")].join
+      end
+    end
+
+    result << "}"
+    result.join("\n")
+  end
+
+  private
+
+  def present(node)
+    return node.to_s unless node.is_a?(Parser::AST::Node)
+    case node.type
+    when :begin  then  "(begin)"
+    when :if     then  "(if)"
+    when :array  then  "(array)"
+    when :send   then  "(send :#{node.to_a[1]})"
+    when :lvar   then  "(lvar :#{node.to_a[0]})"
+    when :def    then  "(def :#{node.to_a[0]})"
+    when :str    then  "(str :#{node.to_a[0]})"
+    when :args   then  "(args)"
+    when :return then  "(return)"
+    else node.to_s
+    end
+  end
+
+  def bfs(node)
+    queue = [node]
+    discovered = []
+    while queue.length > 0 do
+      current = queue.shift
+      next unless current.is_a?(Parser::AST::Node)
+      discovered << current
+      current.children.each do |child|
+        queue << child if child
+      end
+    end
+    discovered
+  end
+end
+
+source_code = <<RUBY
+  def factorial(n)
+    return 1 if [1, 2].includes?(n)
+    factorial(n - 1) + factorial(n - 2)
+  end
+RUBY
+ast = Parser::CurrentRuby.parse(source_code)
+puts ASTRenderer.new(ast).call
+```
+
+Result:
+
+![AST tree](</assets/growing-trees-2/factorial_ast.png>)
+
+Result with comments:
+
+![AST tree with comments](</assets/growing-trees-2/factorial_ast_comments.png>)
+
+The changes from the binary tree renderer are minimal: no binary tree layout code, non-`Parser::AST::Node` children are skipped, and node labels come from the AST node type. Even on this small example the full AST is hard to read — there's too much detail. But we can filter it down.
+
+Let's look at what a class definition node looks like:
+
+```ruby
+class Foo < Bar
+  def body; end
+end
+```
+
+```lisp
+s(:class,
+  s(:const, nil, :Foo),
+  s(:const, nil, :Bar),
+  s(:def, :body,
+    s(:args), nil))
+```
+
+`s` is [s-expression](https://en.wikipedia.org/wiki/S-expression) notation for nested lists. The class node has three arguments: the class name constant, the parent class constant, and the body.
+
+## Building a Class Dependency Diagram
+
+Let's catch class definitions and store them:
+
+```ruby
+class KlassDefinitionsProcessor < Parser::AST::Processor
+  attr_reader :klass_definitions
+
+  def initialize(*)
+    super
+    @klass_definitions = []
+  end
+
+  def on_class(node)
+    klass_konst, _parrent, _body = *node
+    _nested_konst, konst_name = *klass_konst
+    @klass_definitions << konst_name
+    super
+  end
+end
+```
+
+```ruby
+source_code = <<RUBY
+class Foo; end
+class Bar; end
+RUBY
+
+ast = Parser::CurrentRuby.parse(source_code)
+processor = KlassDefinitionsProcessor.new
+processor.process(ast)
+p processor.klass_definitions
+# => [:Foo, :Bar]
+```
+
+Good start. But namespaced constants like `Foo::Bar::Baz` get truncated. Fix: use `klass_konst.loc.expression.source` instead of destructuring:
+
+```ruby
+  def on_class(node)
+    klass_konst, _parrent, _body = *node
+    @klass_definitions << klass_konst.loc.expression.source
+    super
+  end
+```
+
+```ruby
+class Foo::Bar::Baz; end
+class Oof::Zab; end
+# => ["Foo::Bar::Baz", "Oof::Zab"]
+```
+
+Now for the dependency edges. We need to track which constants are referenced inside each class. The problem: standard AST processing is top-down, but we need to know the enclosing class for any given constant. The solution is a nesting stack — push on entry, pop on exit:
+
+```ruby
+  def process(node)
+    @nesting.push(node)
+    super
+    @nesting.pop
+  end
+```
+
+Now we can easily access the current node's parent:
+
+```ruby
+  def parent
+    @nesting.last(2).first
+  end
+```
+
+and find in which class we are processing current node:
+
+```ruby
+  def context_klass
+    @nesting.reverse.select { |x| x.type == :class }.first
+  end
+```
+
+Which gives us useful helpers:
+
+```ruby
+  def klass_name_for(node)
+    klass_konst, _, _ = *node
+    source_for(klass_konst)
+  end
+
+  def source_for(node)
+    node.loc.expression.source
+  end
+```
+
+Wiring it together — collect class definitions and constant references:
+
+```ruby
+  def on_class(node)
+    @klass_definitions << klass_name_for(node)
+    super
+  end
+
+  def on_const(node)
+    konst_name = source_for(node)
+    current_klass = klass_name_for(context_klass)
+    (@klass_dependencies[current_klass] ||= []) << konst_name
+    super
+  end
+```
+
+```ruby
+class Foo::Bar::Baz; end
+class Oof::Zab; def call; Foo::Bar::Baz.new; end; end
+
+# processor.klass_dependencies
+# => {
+# "Foo::Bar::Baz"=>["Foo::Bar::Baz", "Foo::Bar", "Foo"],
+# "Oof::Zab"=>["Oof::Zab", "Oof", "Foo::Bar::Baz", "Foo::Bar", "Foo"]
+# }
+```
+
+Too noisy — nested constants trigger `on_const` for each segment, and the class name itself is included. Skip those cases:
+
+```ruby
+  def on_const(node)
+    unless %i[class const].include?(parent.type)
+      konst_name = source_for(node)
+      if context_klass
+        current_klass = klass_name_for(context_klass)
+        (@klass_dependencies[current_klass] ||= []) << konst_name
+      end
+    end
+    super
+  end
+```
+
+```ruby
+class Foo::Bar::Baz; end
+class Oof::Zab; def call; Foo::Bar::Baz.new; end; end
+# {"Oof::Zab"=>["Foo::Bar::Baz"]}
+```
+
+Now render it with Graphviz:
+
+```ruby
+class GraphRenderer
+  def initialize(relations, klasses)
+    @relations = relations
+    @klasses = klasses
+  end
+
+  def call
+    [
+      begin_header,
+      klasses_info,
+      relations_info,
+      end_header
+    ].flatten.join("\n")
+  end
+
+  private
+
+  def begin_header
+    [
+      %(digraph graphname {),
+      %(rankdir="LR")
+    ]
+  end
+
+  def klasses_info
+    @klasses.map do |klass|
+      [wrap(klass), %Q{[label="#{klass}"]}].join(" ")
+    end
+  end
+
+  def relations_info
+    @relations.map do |klass, dependents|
+      dependents.map do |child|
+        [wrap(klass), wrap(child)].join(' -> ')
+      end
+    end
+  end
+
+  def end_header
+    [%(})]
+  end
+
+  def wrap(text)
+    '"' + text + '"'
+  end
+end
+```
+
+![Relations graph](</assets/growing-trees-2/simple_render.png>)
+
+One remaining limitation: Ruby's namespace resolution means `B::C` inside module `A` and `A::B::C` from outside resolve to the same class, but our processor treats them as different constants. Fully resolving this requires implementing Ruby's constant lookup rules — left as a future exercise.
