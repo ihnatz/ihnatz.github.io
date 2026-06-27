@@ -2,30 +2,21 @@
 layout: default
 ---
 
-<div class="about">
-  <p class="me">
-    <h1>hi,</h1>
-    I'm Ihnat<br/>
-    Feel free to email me at <a href="mailto:iezakrevsky@gmail.com">iezakrevsky@gmail.com</a>.
+<header class="site-header">
+  <h1>Ihnat Zakreuski</h1>
+  <p class="contact-links">
+    <a href="mailto:iezakrevsky@gmail.com">email</a> ·
+    <a href="https://github.com/ihnatz">github</a> ·
+    <a href="https://www.linkedin.com/in/ihnatz">linkedin</a>
   </p>
+</header>
 
-  <p>
-    <a href="https://github.com/ignat-z">gh</a> |
-    <a href="https://linkedin.com/in/ignat-z/">in</a> |
-    <a href="https://t.me/ignat_z">tg</a>
-  <p>
-
-  <div class="home">
-    <div class="post-list">
-      <ul>
-        {% assign posts = site.posts | where_exp: "post", "post.draft != true" %}
-        {% for post in posts %}
-          <li>
-            <span><a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a></span>
-            <small>{{ post.date | date: "%Y %b %-d" }}</small>
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
-  </div>
-</div>
+<ul class="post-list">
+  {% assign posts = site.posts | where_exp: "post", "post.draft != true" %}
+  {% for post in posts %}
+    <li class="post-item">
+      <a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
+      <time>{{ post.date | date: "%Y %b %-d" }}</time>
+    </li>
+  {% endfor %}
+</ul>

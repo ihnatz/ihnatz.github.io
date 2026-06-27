@@ -50,7 +50,6 @@ On my local machine this query takes **26.440s** which is quite fast for 10 mill
 In our production database, sensor readings arrive in batches: multiple sensors record values at the exact same timestamp. This pattern has important implications for database performance, particularly for indexing and query optimization. Let's implement a Rust generator that mimics this behavior:
 
 ```rust
-
 const BATCH_SIZE: usize = 1_000; // Number of sensor readings per batch
 const MAX_SENSORS: i32 = 32; // Total number of unique sensors
 

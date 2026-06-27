@@ -5,7 +5,7 @@ html {
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     line-height: 1.75;
     color: #2d3748;
     background: #ffffff;
@@ -20,7 +20,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    font-family: "Lora", ui-serif, Georgia, serif;
     line-height: 1.25;
     margin: 2rem 0 1rem;
     font-weight: 600;
@@ -46,7 +46,7 @@ a:hover {
 }
 
 a:visited {
-    color: #2563eb;
+    color: #7c3aed;
 }
 
 code {
@@ -79,38 +79,105 @@ pre code {
     padding: 0 1rem;
 }
 
-.home .menu {
-    width: 100%;
-    max-width: min(75ch, 100% - 2rem);
-    padding: 1rem 0;
-    margin: 0 auto;
-}
-
-.home .menu .item {
-    list-style: none;
-    display: inline-block;
-    margin-right: 1.5rem;
-}
-
-.home .menu .item:last-child {
-    margin-right: 0;
-}
-
-.home .menu .item a {
-    font-size: 1rem;
-    padding: 0.5rem 0;
-    color: #2d3748;
-}
-
-.home .menu .item a:hover {
-    color: #3b82f6;
-}
-
 .home .content {
     width: 100%;
-    max-width: min(75ch, 100% - 2rem);
+    max-width: min(72ch, 100% - 2rem);
     margin: 0 auto;
-    padding: 2rem 0;
+    padding: 2.5rem 0;
+}
+
+/* Site Header (home page) */
+.site-header {
+    padding-bottom: 2rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.site-header h1 {
+    margin: 0 0 0.5rem;
+    font-size: 1.75rem;
+}
+
+.contact-links {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #718096;
+}
+
+.contact-links a {
+    color: #718096;
+}
+
+.contact-links a:visited {
+    color: #718096;
+}
+
+.contact-links a:hover {
+    color: #3b82f6;
+    text-decoration: none;
+}
+
+/* Post List (home page) */
+.post-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.post-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1.5rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.post-item:last-child {
+    border-bottom: none;
+}
+
+.post-item a {
+    color: #2d3748;
+    flex: 1;
+    min-width: 0;
+}
+
+.post-item a:visited {
+    color: #6b7280;
+}
+
+.post-item a:hover {
+    color: #3b82f6;
+    text-decoration: none;
+}
+
+.post-item time {
+    font-size: 0.85rem;
+    color: #a0aec0;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Post page */
+.post {
+    padding-bottom: 3rem;
+}
+
+.post-header {
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.post-title {
+    margin: 0 0 0.25rem;
+}
+
+.post-meta {
+    font-size: 0.875rem;
+    color: #718096;
 }
 
 #map {
@@ -178,8 +245,8 @@ pre code {
 /* Dark Mode */
 @media (prefers-color-scheme: dark) {
     body {
-        background: #1a202c;
-        color: #f7fafc;
+        background: #0f172a;
+        color: #e2e8f0;
     }
 
     a {
@@ -195,20 +262,55 @@ pre code {
     }
 
     code {
-        background: #2d3748;
+        background: #1e293b;
+        color: #e2e8f0;
     }
 
     pre {
-        background: #2d3748;
-        border-color: #4a5568;
+        background: #1e293b;
+        border-color: #334155;
     }
 
-    .home .menu .item a {
-        color: #f7fafc;
+    .site-header {
+        border-bottom-color: #1e293b;
     }
 
-    .home .menu .item a:hover {
+    .contact-links,
+    .contact-links a,
+    .contact-links a:visited {
+        color: #64748b;
+    }
+
+    .contact-links a:hover {
         color: #60a5fa;
+    }
+
+    .post-item {
+        border-bottom-color: #1e293b;
+    }
+
+    .post-item a {
+        color: #e2e8f0;
+    }
+
+    .post-item a:visited {
+        color: #94a3b8;
+    }
+
+    .post-item a:hover {
+        color: #60a5fa;
+    }
+
+    .post-item time {
+        color: #475569;
+    }
+
+    .post-header {
+        border-bottom-color: #1e293b;
+    }
+
+    .post-meta {
+        color: #64748b;
     }
 
     #progress-indicator {
@@ -243,19 +345,8 @@ pre code {
         font-size: 16px;
     }
 
-    .home .menu {
-        padding: 1rem 0;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        white-space: nowrap;
-    }
-
-    .home .menu .item {
-        margin-right: 1rem;
-    }
-
     .home .content {
-        padding: 1rem 0;
+        padding: 1.5rem 0;
     }
 
     #map {
@@ -266,4 +357,13 @@ pre code {
     h2 { font-size: 1.5rem; }
     h3 { font-size: 1.25rem; }
     h4, h5, h6 { font-size: 1rem; }
+
+    .post-item {
+        flex-direction: column;
+        gap: 0.1rem;
+    }
+
+    .post-item time {
+        font-size: 0.8rem;
+    }
 }
