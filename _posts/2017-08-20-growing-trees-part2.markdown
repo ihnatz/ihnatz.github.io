@@ -2,7 +2,7 @@
 layout: post
 title:  "Parsing Ruby AST for Class Dependency Graphs"
 date:   2017-08-20 11:45:13
-categories: ruby graphviz trees ast
+tags: ruby graphviz trees ast
 published: false
 ---
 

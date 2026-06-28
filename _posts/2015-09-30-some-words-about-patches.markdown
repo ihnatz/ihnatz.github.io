@@ -2,7 +2,7 @@
 layout: post
 title:  "Some words about patches"
 date:   2015-09-30 12:06:31
-categories: git svn patches
+tags: git svn patches
 published: false
 ---
 

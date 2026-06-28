@@ -2,7 +2,7 @@
 layout: post
 title:  "How hey.com uses native bridge"
 date:   2021-10-16 01:22:35
-categories: strada hotwired
+tags: strada hotwired
 published: false
 ---
 

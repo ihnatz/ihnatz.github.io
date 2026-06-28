@@ -2,7 +2,7 @@
 layout: post
 title:  "Full-text Fuzzy Search with pg_trgm and Triggers"
 date:   2015-12-05 19:21:55
-categories: postgres triggers rails
+tags: postgres triggers rails
 ---
 
 SQL triggers is something that everybody heard a lot about. Before start we need to talk about benefits and burdens.

@@ -2,7 +2,7 @@
 layout: post
 title:  "Lazy piping ES6 generators"
 date:   2015-11-25 02:51:33
-categories: javascript es6 generators
+tags: javascript es6 generators
 published: false
 ---
 

@@ -2,7 +2,7 @@
 layout: post
 title:  "Tree Traversal in PostgreSQL: ltree, GiST, and Recursive CTEs"
 date:   2015-07-21 09:49:35
-categories: postgres ltree recursive
+tags: postgres ltree recursive
 ---
 
 PostgreSQL provides you ltree extension to organize tree-like structures. You can enable this extension with command `CREATE EXTENSION IF NOT EXISTS ltree;` or you can wrap it with ActiveRecord

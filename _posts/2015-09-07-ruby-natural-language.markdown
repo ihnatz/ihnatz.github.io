@@ -2,7 +2,7 @@
 layout: post
 title:  "Ruby Natural Language"
 date:   2015-09-07 09:09:31
-categories: ruby natural
+tags: ruby natural
 published: false
 ---
 

@@ -2,7 +2,7 @@
 layout: post
 title:  "Rails: Fast test feedback loop"
 date:   2021-08-18 13:26:31
-categories: rails specs
+tags: rails specs
 published: false
 ---
 

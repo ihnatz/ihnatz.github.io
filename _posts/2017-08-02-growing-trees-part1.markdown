@@ -2,7 +2,7 @@
 layout: post
 title:  "Visualizing Trees and ASTs with Graphviz"
 date:   2017-08-02 19:09:22
-categories: ruby graphviz trees
+tags: ruby graphviz trees
 ---
 
 Visualization is a great opportunity to see some complex structures from another side. Let's assume we want to inspect how trees actually look. We will use Breadth-first search (BFS) to traverse graph (or tree in our case) and show connections between nodes.

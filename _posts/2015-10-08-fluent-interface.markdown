@@ -2,7 +2,7 @@
 layout: post
 title:  "Fluent interface in Ruby"
 date:   2015-11-08 17:07:12
-categories: ruby object-oriented-api
+tags: ruby object-oriented-api
 published: false
 ---
 

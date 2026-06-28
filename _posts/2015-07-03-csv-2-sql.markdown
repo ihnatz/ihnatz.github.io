@@ -2,7 +2,7 @@
 layout: post
 title:  "CSV2SQL"
 date:   2015-07-03 21:37:35
-categories: postgres csv sql
+tags: postgres csv sql
 published: false
 ---
 

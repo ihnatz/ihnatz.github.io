@@ -2,7 +2,7 @@
 layout: post
 title:  "Working with deprecations"
 date:   2017-11-28 21:11:13
-categories: rails honeybadger
+tags: rails honeybadger
 published: false
 ---
 

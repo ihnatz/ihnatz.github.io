@@ -2,7 +2,7 @@
 layout: post
 title:  "Materialized Views and Concurrent Refresh"
 date:   2015-06-19 17:49:35
-categories: rails materialized views
+tags: rails materialized views
 ---
 
 Materialized view is an object that contains the query's results. Unlike a database table it doesn't support `INSERT`/`UPDATE`/`DELETE` operations. Since these operations are unsupported, to update a materialized view you need to call a refresh operation. In PostgreSQL materialized views support was introduced in version 9.3.

@@ -2,7 +2,7 @@
 layout: post
 title:  "Finding Leaf Nodes with ltree"
 date:   2015-08-06 22:20:35
-categories: postgres ltree lateral
+tags: postgres ltree lateral
 ---
 
 Let's assume you want to find all node leaves. To keep it simple for all examples we will use DB from previous post. Leaf is a node without children. If you have `parent_id` it seems easy to find all leaves

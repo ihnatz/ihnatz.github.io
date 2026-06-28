@@ -2,7 +2,7 @@
 layout: post
 title:  "Testing Chrome Extension with CodeShip"
 date:   2015-11-18 01:22:09
-categories: javascript codeship karma eslint
+tags: javascript codeship karma eslint
 published: false
 ---
 

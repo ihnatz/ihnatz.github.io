@@ -2,7 +2,7 @@
 layout: post
 title:  "Fast PostgreSQL Data Generation"
 date:   2024-11-07 22:18:11
-categories: postgres rust
+tags: postgres rust
 ---
 
 Improving query performance is always challenging, especially when working with large-scale databases. While adjusting indexes is a common approach, testing these optimizations becomes complex when your tables contain terabytes of data. I recently faced this challenge: I needed to test potential improvements for a large-scale table, but there was no simple way to work with terabytes of data on my laptop. The solution? Generating a representative dataset that mimics our production database structure and patterns.
