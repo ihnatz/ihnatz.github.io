@@ -134,6 +134,7 @@ pre code {
 }
 
 .home .content {
+    position: relative;
     width: 100%;
     max-width: min(65ch, 100% - 2rem);
     margin: 0 auto;
@@ -211,6 +212,38 @@ pre code {
     white-space: nowrap;
     flex-shrink: 0;
     font-variant-numeric: tabular-nums;
+}
+
+/* Home link — sits in the left gutter, on the title's line.
+   Font metrics match the post title (h2) so both line boxes start
+   at the same offset from the 2.5rem content padding. */
+.home-link,
+.home-link:visited {
+    position: absolute;
+    top: 2rem; /* content padding minus own vertical padding */
+    left: -2.5rem;
+    font-family: var(--font-mono);
+    font-size: 1.75rem;
+    line-height: 1.25;
+    color: var(--accent);
+    text-decoration: none;
+    padding: 0.5rem 0.75rem; /* tap target beyond the single glyph */
+}
+
+.home-link:hover {
+    color: var(--accent-strong);
+}
+
+/* No gutter on narrow screens — return the link to the flow, above the content */
+@media screen and (max-width: 800px) {
+    .home-link,
+    .home-link:visited {
+        position: static;
+        display: inline-block;
+        font-size: 1.4rem;
+        line-height: 1;
+        margin: 0 0 0.5rem -0.75rem;
+    }
 }
 
 /* Post page */

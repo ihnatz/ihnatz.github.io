@@ -4,6 +4,9 @@
   <body>
     <div class="home">
       <div class="content">
+        {% if page.url != "/" %}
+          <a class="home-link" href="/" aria-label="Home">/</a>
+        {% endif %}
         {{ content }}
       </div>
     </div>
