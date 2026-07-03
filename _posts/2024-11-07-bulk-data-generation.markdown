@@ -499,4 +499,4 @@ Each optimization step brought significant improvements, with our final binary i
 
 Our journey from simple inserts to binary COPY protocol shows that while readable solutions are great, sometimes you need to dive into lower-level details for maximum performance. The final binary implementation may look complex, but the 28x speedup makes it worthwhile when testing databases at scale.
 
-All code from this article is available in [repository link](<https://github.com/ignat-z/fast_generation>).
+All code from this article is available in [repository link](<https://github.com/ihnatz/fast_generation>).

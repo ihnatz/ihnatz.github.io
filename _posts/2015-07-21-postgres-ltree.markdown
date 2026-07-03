@@ -48,7 +48,7 @@ insert into reports (property_id, value) VALUES (5, 9);
 insert into reports (property_id, value) VALUES (6, 11);
 {% endhighlight %}
 
-If you want more data to fill difference between queries speed you can use [my file](<https://gist.github.com/ignat-zakrevsky/10a4e2024b9911c5c15f>) with 4.5k+ records. (You need download it, connect to schema through `psql` and run `\i path_to_file`)
+If you want more data to fill difference between queries speed you can use [my file](<https://gist.github.com/ihnatz/10a4e2024b9911c5c15f>) with 4.5k+ records. (You need download it, connect to schema through `psql` and run `\i path_to_file`)
 Let's build named paths for each node. Since the path column stores all parent ids, we can easily filter unrelated nodes with `like` queries.
 
 {% highlight sql %}
