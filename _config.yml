@@ -1,7 +1,7 @@
 title: Ihnat Z
 email: iezakrevsky@gmail.com
-description: Contacts of Ihnat Zakreuski
-url: "https://ignat-z.github.io"
+description: Blog of Ihnat Zakreuski
+url: "https://ihnatz.github.io"
 
 exclude: [vendor]
 markdown: kramdown
