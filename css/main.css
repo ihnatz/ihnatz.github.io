@@ -7,6 +7,7 @@
     --ink-faint: #64748b;      /* dates, meta — dimmest allowed for readability */
     --accent: #0f766e;         /* links */
     --accent-strong: #115e59;  /* link hover */
+    --accent-ink: #134e4a;     /* standalone glyphs (no underline to help them read) */
     --visited: #86198f;        /* visited links in prose */
     --line: #e2e8f0;           /* borders, rules */
     --code-bg: #f8fafc;
@@ -24,6 +25,7 @@
         --ink-faint: #94a3b8;
         --accent: #2dd4bf;
         --accent-strong: #5eead4;
+        --accent-ink: #2dd4bf;
         --visited: #c084fc;
         --line: #1e293b;
         --code-bg: #1e293b;
@@ -214,24 +216,25 @@ pre code {
     font-variant-numeric: tabular-nums;
 }
 
-/* Home link — sits in the left gutter, on the title's line.
-   Font metrics match the post title (h2) so both line boxes start
-   at the same offset from the 2.5rem content padding. */
 .home-link,
 .home-link:visited {
     position: absolute;
     top: 2rem; /* content padding minus own vertical padding */
-    left: -2.5rem;
+    left: -3.5rem;
     font-family: var(--font-mono);
     font-size: 1.75rem;
+    font-weight: 700;
     line-height: 1.25;
-    color: var(--accent);
+    color: var(--accent-ink);
     text-decoration: none;
     padding: 0.5rem 0.75rem; /* tap target beyond the single glyph */
+    border-radius: 6px;
+    transition: color 0.2s ease, background-color 0.2s ease;
 }
 
 .home-link:hover {
-    color: var(--accent-strong);
+    color: var(--paper);
+    background: var(--accent);
 }
 
 /* No gutter on narrow screens — return the link to the flow, above the content */
