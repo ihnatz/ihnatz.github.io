@@ -2,31 +2,55 @@
 layout: post
 title:  "All My Meters Said Innocent"
 subtitle: "debugging invisible latency in a Python trading system"
-date: 2026-07-03 22:56:17
+date: 2026-07-13 19:56:17
 tags: python fix multiprocessing threading
-draft: true
 ---
 
-Just after lunch on a Monday, an alert fired: _FIX session disconnected_. That was new. The session dropped at 09:30 NY time — the US market open, when the accumulated pre-market orders execute and a significant share of the day's volume goes through in minutes. For a drop-copy session, a disconnection at the open is the expensive kind: trading carries on without you, and every trade that clears while you're not listening has to be found and confirmed by hand the next day. At the open, that's hundreds of trades per second.
-A few weeks earlier, we'd routed more traffic through this session.
-The service itself was unremarkable. Python 3.11, QuickFIX — C++ under the hood — handling the sessions, Postgres storing the trades. One pod, one CPU, nothing fancy.
-And the dashboard said everything was fine.
+Just after lunch on a Monday, an alert fired: _FIX session disconnected_. That was new. The session dropped at 09:30 NY time — the US market open, when the accumulated pre-market orders execute and a significant share of the day's volume goes through in minutes. For a drop-copy session, a disconnection at the open is the expensive kind: trading carries on without you, and every trade that clears while you're not listening has to be found and confirmed by hand the next day. At the open, that's hundreds of trades per second. A few weeks earlier, we'd routed more traffic through this session.
 
-It ran as a single Python process. One connection per venue, each feeding FIX messages in on its own ingest thread, which buffered them and wrote them to Postgres. A batch processor read those messages back out and turned them into trades.
-That was the whole system: ingest threads accumulating messages, a processor draining them into trades, a database in between. It had run this way for a long time, quietly, without anyone needing to think about it.
+The service itself was unremarkable. Python 3.11, QuickFIX — C++ under the hood — handling the sessions, Postgres storing the trades. One pod, one CPU, nothing fancy. And the dashboard said everything was fine.
+
+It ran as a single Python process. One connection per venue, each feeding FIX messages in on its own ingest thread, which buffered them and wrote them to Postgres. A batch processor read those messages back out and turned them into trades. That was the whole system: ingest threads accumulating messages, a processor draining them into trades, a database in between. It had run this way for a long time, quietly, without anyone needing to think about it.
 
 The database is the reflex suspect, so I went there. I pulled the save-time histogram: 0–500ms, three-quarters under 100ms. It looked healthy — not pristine, but healthy. I poked the indexes, found nothing damning, ran a couple of faster-insert tricks (UNNEST won the local benchmark and changed nothing real), and moved on. The histogram already contained the answer. Batches arrived every ~330 ms and three-quarters of saves cleared in under 100 ms — the occasional 500 ms tail was debt the next couple of saves repaid. I didn't do that arithmetic at the time — I just saw a green-ish chart and crossed the database off. That's the habit worth naming, because I'm about to lean on it again: trust the dashboard, move on to the next suspect. Here it cost nothing — the database really was innocent. It didn't stay free.
 
+<figure>
+  <img
+    src="/assets/innocent/tails.svg"
+    alt="The database's alibi"
+    style="max-width:100%;height:auto;"
+  >
+  <figcaption style="text-align: center;">
+    <i>The database's alibi.</i>
+  </figcaption>
+</figure>
+
 The next cost that grows with message volume is parsing. Each message needs to be parsed — but parsing is core to QuickFIX, it runs in the C++ extension, and it's been polished by dozens of systems carrying far heavier loads than ours. The microbenchmarks said the same: parse 4.2µs, `toString` 3µs, prod-formatted log 21.6µs, call it 32µs per message with headroom. A heavy market open runs under 100,000 messages, so even at that ceiling the entire per-message compute budget for an open is around 3.2 seconds of CPU. The messages were being rejected as older than 120 seconds — QuickFIX's default cutoff — so the backlog was at least two minutes deep. Compute fell short of the symptom by a factor of nearly forty — per-message work was not the constraint.
-The save tails told a different story. At market open they clustered around multiples of 100ms — 103.99, 211.37, 306.12, 325.97, 334.94ms against a 30–80ms median — the textbook CFS-throttling signature, 100ms being the scheduler period. CPU demand at open was running at about 2× the one-core allocation. So I raised the limit from one core to two and a half, on the same day.
+
+The save tails told a different story. At market open they sat just above multiples of 100ms — 103.99, 211.37, 306.12, 325.97, 334.94ms against a 30–80ms median — the textbook CFS-throttling signature, 100ms being the scheduler period. CPU demand at open was running at about 2× the one-core allocation. So I raised the limit from one core to two and a half, on the same day.
+
+<figure>
+  <img
+    src="/assets/innocent/cpu.svg"
+    alt="CPU demand at market open, against a 1-core limit. Reconstructed from production monitoring"
+    style="max-width:100%;height:auto;"
+  >
+  <figcaption style="text-align: center;">
+    <i>CPU demand at market open, against a 1-core limit.</i> 
+    <br/>
+    <i>Reconstructed from production monitoring.</i>
+  </figcaption>
+</figure>
 
 The next day was clean. For two more days it looked solved. The following Monday, the FIX session disconnected at market open. The bump had bought three days, not a fix. And the tell was in the gap: the saturation alarm had gone quiet — CPU utilisation looked fine now — but the lag came back anyway. There was headroom, and it didn't help. Whatever the ceiling was, it wasn't compute.
 
-The next suspect was logging. Every incoming FIX message was being logged — about 70k of the ~100k messages in a ten-minute open.
+The next suspect was logging. Every incoming FIX message was being logged: of the ~100k log lines in a ten-minute open, about 70k were FIX messages.
 My prior was that logging couldn't be it — the same battle-tested pipe every system here has used for years. You don't expect to be the one who breaks it. A local reproduction changed that: under a deliberately slow sink, lag grew with volume. Sync writes to a full pipe block, and an open is precisely when volume spikes. At one point that pushed my confidence to near 90% — high enough to warrant a definitive test, not a hunch.
+
 So I stripped it back: FIX logging off, most other levels downgraded. Logged volume fell ~20x, to ~5k total in the same window. The next open lagged just the same. Twenty times less logging, identical result — not logging.
 
 Eventually I stopped looking for causes and built the metric that actually mattered: the time between a message leaving the venue (tag 52, its sending timestamp) and the moment QuickFIX hands the message to our application code — the fromApp callback. I called it `lag_ms`, and it isn't an arbitrary metric — it's the exact quantity QuickFIX checks when deciding a session has gone stale.
+
 The meter ran at the next market open:
 
 ```
@@ -59,7 +83,7 @@ For the first time I had a hypothesis that explained both the idle CPU and the g
 
 Here we are: the lag dropped from almost two minutes to the floor of the meter — tag 52 carries whole seconds, so the max can't settle below ~1s. The unbounded climb (the hallmark of arrival > drain) has disappeared — ingestion now keeps pace with the venue at the open. And here's the part worth dwelling on — one extra process in the same pod, and CPU barely moved. Same messages, same compute. What collapsed was the lag, by well over an order of magnitude. The bottleneck was never the CPU. It was the wait.
 
-It looked great, but this wasn't the first time a change has led to short-term success. 
+It looked great, but this wasn't the first time a change had led to short-term success. 
 
 Another Monday, 09:30 NY time, market open, I had the dashboard up, refreshing the page every few seconds. First reading: around 1s. That had happened before on a slow open, so I waited. One minute, still ~1s. Three minutes, seven minutes — processed-message count climbing, max lag flat. A win.
 
@@ -88,8 +112,7 @@ The script uses Python 3.11; on 3.12 the runaway is shallower but still unbounde
 import json, socket, struct, sys, threading, time
 import multiprocessing as mp
 
-DB_ADDR = ("127.0.0.1", 5001)
-FEED_ADDR = ("127.0.0.1", 5002)
+DB_ADDR, FEED_ADDR = ("127.0.0.1", 5001), ("127.0.0.1", 5002)
 MSG = struct.Struct("d")
 
 # knobs
@@ -100,8 +123,7 @@ HOLDS_PER_CYCLE = 200
 def db_stub():
     srv = socket.socket()
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    srv.bind(DB_ADDR)
-    srv.listen()
+    srv.bind(DB_ADDR); srv.listen()
 
     def serve(conn):
         with conn:
@@ -136,16 +158,14 @@ def recv_exact(conn, n):
     buff = b""
     while len(buff) < n:
         chunk = conn.recv(n - len(buff))
-        if not chunk:
-            raise ConnectionError
+        if not chunk: raise ConnectionError
         buff += chunk
     return buff
 
 def ingest():
     srv = socket.socket()
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    srv.bind(FEED_ADDR)
-    srv.listen()
+    srv.bind(FEED_ADDR); srv.listen()
     conn, _ = srv.accept()
     lags = []
     while True:
@@ -153,9 +173,8 @@ def ingest():
         lags.append(time.monotonic() - sent)
         if len(lags) == 100:
             print(
-                f"lag_avg={sum(lags) / 100 * 1000:8.1f}",
-                f"lag_max={max(lags) * 1000:8.1f}"
-            )
+                f"lag_avg={sum(lags) / 100 * 1000:8.1f}", 
+                f"lag_max={max(lags) * 1000:8.1f}")
             lags = []
 
 if __name__ == '__main__':
